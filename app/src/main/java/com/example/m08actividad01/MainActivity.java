@@ -3,6 +3,8 @@ package com.example.m08actividad01;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -18,6 +20,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Unit> units;
     Unit unitFrom;
     Unit unitTo;
+    Double rate;
 
     EditText tbValue;
     Double value;
@@ -29,9 +32,30 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.conversor);
 
-        tbValue = findViewById(R.id.textValue);
-
         units = unitListFactory();
+
+        tbValue = findViewById(R.id.textValue);
+        tbValue.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                if (textIsEmpty()) {
+                    value = 0.0;
+                    lbResult.setText(" -- ");
+                } else {
+                    value = Double.parseDouble(tbValue.getText().toString());
+                    calculateAndShowResult();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+            }
+        });
 
         ArrayAdapter<Unit> adapter = new ArrayAdapter<Unit>(
                 getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, units);
@@ -42,13 +66,13 @@ public class MainActivity extends AppCompatActivity {
         spUnitFrom.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                unitFrom = (Unit)spUnitFrom.getSelectedItem();
-                lbResult.setText("FROM Seleccionado: " + unitFrom.name + " (" + unitFrom.squaredMeterEquivalence + " m2)");
+                unitFrom = (Unit) spUnitFrom.getSelectedItem();
+                setConversionRate();
+                calculateAndShowResult();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
-
             }
         });
 
@@ -57,38 +81,49 @@ public class MainActivity extends AppCompatActivity {
         spUnitTo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                unitTo = (Unit)spUnitTo.getSelectedItem();
-                lbResult.setText("TO Seleccionado: " + unitTo.name + " (" + unitTo.squaredMeterEquivalence + " m2)");
+                unitTo = (Unit) spUnitTo.getSelectedItem();
+                setConversionRate();
+                calculateAndShowResult();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
-
             }
         });
 
-        lbResult = findViewById(R.id.textResultado);
+        unitFrom = (Unit) spUnitFrom.getSelectedItem();
+        unitTo = (Unit) spUnitTo.getSelectedItem();
 
-        btCalculate = (Button) findViewById(R.id.btCalculate);
-        btCalculate.setOnClickListener(view -> {
-            if (!tbValue.getText().toString().matches("")){
-                value = Double.parseDouble(tbValue.getText().toString());
-                convert();
-            }
-        });
+        lbResult = findViewById(R.id.textResult);
     }
 
-    private void convert() {
-        if(unitFrom != null && unitTo != null && value != null) {
-            double result = (unitFrom.squaredMeterEquivalence / unitTo.squaredMeterEquivalence) * value;
-            String formattedResult = DecimalFormat(result);
-            lbResult.setText(formattedResult+ " " + unitTo.name);
+    private boolean textIsEmpty() {
+        return tbValue.getText().toString().equals("");
+    }
+
+    private void setConversionRate() {
+        if (unitsAreSelected()) {
+            rate = (unitFrom.squaredMeterEquivalence / unitTo.squaredMeterEquivalence);
         }
+    }
+
+    private void calculateAndShowResult() {
+        if (rate != null && value != null && unitsAreSelected()) {
+            double result = rate * value;
+            String formattedResult = DecimalFormat(result);
+            lbResult.setText(formattedResult);
+        } else {
+            lbResult.setText(" -- ");
+        }
+    }
+
+    private boolean unitsAreSelected() {
+        return unitFrom.squaredMeterEquivalence != 0 && unitTo.squaredMeterEquivalence != 0;
     }
 
     private ArrayList<Unit> unitListFactory() {
         ArrayList<Unit> units = new ArrayList<Unit>();
-        units.add(new Unit("", 1));
+        units.add(new Unit("Seleccione unidad", 0));
         units.add(new Unit("Metro cuadrado", 1));
         units.add(new Unit("Kilómetro cuadrado", 1.0E6));
         units.add(new Unit("Milla cuadrada", 2.59E6));
