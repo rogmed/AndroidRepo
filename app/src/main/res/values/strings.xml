@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">M08Actividad01</string>
+    <string name="title">Conversor de unidades</string>
+    <string name="btCalculate">CALCULAR</string>
 </resources>
