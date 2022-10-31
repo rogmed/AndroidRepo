@@ -8,7 +8,6 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -18,14 +17,17 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     ArrayList<Unit> units;
+    Double value;
     Unit unitFrom;
     Unit unitTo;
     Double rate;
+    Double result;
 
     EditText tbValue;
-    Double value;
-    Button btCalculate;
     TextView lbResult;
+    ArrayAdapter<Unit> adapter;
+    Spinner spUnitFrom;
+    Spinner spUnitTo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,14 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-                if (textIsEmpty()) {
-                    value = 0.0;
-                    lbResult.setText(" -- ");
-                } else {
-                    value = Double.parseDouble(tbValue.getText().toString());
-                    calculateAndShowResult();
-                }
+                calculateAndShowResult();
             }
 
             @Override
@@ -57,11 +52,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ArrayAdapter<Unit> adapter = new ArrayAdapter<Unit>(
-                getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, units);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        adapter = new ArrayAdapter<Unit>(
+                this, android.R.layout.simple_spinner_dropdown_item, units);
 
-        Spinner spUnitFrom = (Spinner) findViewById(R.id.spUnitFrom);
+        spUnitFrom = (Spinner) findViewById(R.id.spUnitFrom);
         spUnitFrom.setAdapter(adapter);
         spUnitFrom.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -76,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Spinner spUnitTo = (Spinner) findViewById(R.id.spUnitTo);
+        spUnitTo = (Spinner) findViewById(R.id.spUnitTo);
         spUnitTo.setAdapter(adapter);
         spUnitTo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -97,8 +91,24 @@ public class MainActivity extends AppCompatActivity {
         lbResult = findViewById(R.id.textResult);
     }
 
-    private boolean textIsEmpty() {
+    private void calculateAndShowResult() {
+        if (!valueIsEmpty() && unitsAreSelected()) {
+            value = Double.parseDouble(tbValue.getText().toString());
+            result = rate * value;
+            String formattedResult = DecimalFormat(result);
+            lbResult.setText(formattedResult);
+        } else {
+            value = 0.0;
+            lbResult.setText(" -- ");
+        }
+    }
+
+    private boolean valueIsEmpty() {
         return tbValue.getText().toString().equals("");
+    }
+
+    private boolean unitsAreSelected() {
+        return unitFrom.squaredMeterEquivalence != 0 && unitTo.squaredMeterEquivalence != 0;
     }
 
     private void setConversionRate() {
@@ -107,18 +117,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void calculateAndShowResult() {
-        if (rate != null && value != null && unitsAreSelected()) {
-            double result = rate * value;
-            String formattedResult = DecimalFormat(result);
-            lbResult.setText(formattedResult);
-        } else {
-            lbResult.setText(" -- ");
-        }
-    }
+    private String DecimalFormat(double number) {
+        DecimalFormat df = new DecimalFormat("0.00");
 
-    private boolean unitsAreSelected() {
-        return unitFrom.squaredMeterEquivalence != 0 && unitTo.squaredMeterEquivalence != 0;
+        return df.format(number);
     }
 
     private ArrayList<Unit> unitListFactory() {
@@ -134,11 +136,5 @@ public class MainActivity extends AppCompatActivity {
         units.add(new Unit("Acre", 4046.86));
 
         return units;
-    }
-
-    private String DecimalFormat(double number) {
-        DecimalFormat df = new DecimalFormat("0.00");
-
-        return df.format(number);
     }
 }
